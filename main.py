@@ -26,15 +26,31 @@ class PDFViewer:
         self.filemenu.add_command(label="Open File")
         self.filemenu.add_command(label="Exit")
 
+def parse_arguments(args=None):
+    parser = argparse.ArgumentParser(description="Open the PDF viewer")
+
+    parser.add_argument(
+        "file",
+        type=str,
+        nargs="?",
+        default=None,
+        help="input pdf file"
+    )
+
+    parser.add_argument(
+        "-e",
+        "--extract",
+        type=str,
+        help="extract a range of pages inclusive x-y"
+    )
+
+    return parser.parse_args()
+
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("file", type=str,
-                        help="input pdf file")
-    parser.add_argument("-e", "--extract", type=str,
-                        help="extract a range of pages inclusive x-y")
-    args = parser.parse_args()
-    print(args.file)
-    print(args.extract)
+    args = parse_arguments()
+    # print(args.file)
+    # print(args.extract)
 
     root = Tk()
     app = PDFViewer(root)
