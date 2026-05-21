@@ -2,6 +2,7 @@ import argparse
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog as fd
+from src.miner import PDFMiner
 import os
 
 class PDFViewer:
@@ -25,8 +26,7 @@ class PDFViewer:
         self.master.config(menu=self.menu)
         self.filemenu = Menu(self.menu)
         self.menu.add_cascade(label="File", menu=self.filemenu)
-        self.filemenu.add_command(label="Open File")
-        self.filemenu.add_command(label="Exit")
+        self.filemenu.add_command(label="Open File", command=self.open_file)
 
         # TOP AND BOTTOM FRAMES
         self.top_frame = ttk.Frame(self.master, width=580, height=460)
@@ -60,14 +60,54 @@ class PDFViewer:
 
         self.upbutton = ttk.Button(self.bottom_frame, image=self.uparrow)
         self.upbutton.grid(row=0, column=1, padx=(270, 5), pady=8)
-        self.downbutton = ttk.Button(self.bottom_frame, image=self.downarrow)
+        self.downbutton = ttk.Button(self.bottom_frame, image=self.downarrow, command=self.next_page)
         self.downbutton.grid(row=0, column=3, pady=8)
 
         self.page_label = ttk.Label(self.bottom_frame, text='page')
         self.page_label.grid(row=0, column=4, padx=5)
 
-        self.filemenu.add_command(label="Exit")
         self.filemenu.add_command(label="Exit", command=self.master.destroy)
+
+    def open_file(self):
+        filepath = fd.askopenfilename(title='Select a PDF file', initialdir=os.getcwd(), filetypes=(('PDF', '*pdf'), ))
+
+        if filepath:
+            self.path = filepath
+            filename = os.path.basename(self.path)
+
+            self.miner = PDFMiner(self.path)
+            data, numPages = self.miner.get_metadata()
+
+            self.current_page = 0
+            if numPages and isinstance(data, dict):
+                self.name = data.get('title', filename[:-4])
+                self.author = data.get('author', None)
+                self.numPages = numPages
+
+                self.fileisopen = True
+                self.display_page()
+                self.master.title(self.name)
+
+    def display_page(self):
+        if self.numPages is not None and 0 <= self.current_page < self.numPages:
+            self.img_file = self.miner.get_page(self.current_page)
+            self.output.create_image(0, 0, anchor='nw', image=self.img_file)
+            self.stringified_current_page = self.current_page + 1
+            self.page_label['text'] = str(self.stringified_current_page) + 'of' + str(self.numPages)
+            region = self.output.bbox(ALL)
+            self.output.configure(scrollregion=region)
+
+    def next_page(self):
+        if self.fileisopen:
+            if self.numPages is not None and self.current_page <= self.numPages - 1:
+                self.current_page += 1
+                self.display_page()
+
+    def previous_page(self):
+        if self.fileisopen:
+            if self.current_page > 0:
+                self.current_page -= 1
+                self.display_page()
 
 def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Open the PDF viewer")
