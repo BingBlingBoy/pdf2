@@ -19,7 +19,7 @@ class PDFMiner:
         num_pages = self.pdf.page_count
         return metadata, num_pages
 
-    def get_page(self, page_num):
+    def get_page(self, page_num) -> PhotoImage:
         page = self.pdf.load_page(page_num)
 
         if self.zoom:
