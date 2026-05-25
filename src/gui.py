@@ -4,6 +4,8 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from src.miner import PDFMiner
 
+CANVAS_WIDTH = 1000
+
 class PDFViewer:
     def __init__(self, master, initial_file=None) -> None:
         self.path = None
@@ -17,7 +19,9 @@ class PDFViewer:
         self.master = master
         self.master.title('PDF Viewer')
         self.master.geometry('580x520+440+180')
-        self.master.resizable(width=0, height=0)
+        self.master.resizable(width=True, height=True)
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
         # self.master.iconbitmap(self.master, 'pdf_file_icon.ico')
 
         self._init_menu()
@@ -41,24 +45,33 @@ class PDFViewer:
 
     def _init_layout(self) -> None:
         # TOP AND BOTTOM FRAMES
-        self.top_frame = ttk.Frame(self.master, width=580, height=460)
-        self.top_frame.grid(row=0, column=0)
-        self.top_frame.grid_propagate(False)
+        self.top_frame = ttk.Frame(self.master)
+        self.top_frame.grid(row=0, column=0, sticky='nsew')
 
-        self.bottom_frame = ttk.Frame(self.master, width=580, height=50)
-        self.bottom_frame.grid(row=1, column=0)
-        self.bottom_frame.grid_propagate(False)
+        # Top frame takes up all the space
+        self.top_frame.columnconfigure(0, weight=1)
+        self.top_frame.rowconfigure(0, weight=1)
+
+        # Bottom frame is responsible for the buttons
+        self.bottom_frame = ttk.Frame(self.master, height=50)
+        self.bottom_frame.grid(row=1, column=0, sticky='ew')
 
         # VERTICAL AND HORIZONTAL SCROLLBARS
         self.scrolly = Scrollbar(self.top_frame, orient=VERTICAL)
         self.scrolly.grid(row=0, column=1, sticky="ns")
+
         self.scrollx = Scrollbar(self.top_frame, orient=HORIZONTAL)
         self.scrollx.grid(row=1, column=0, sticky="we")
 
         # ADDING THE CANVAS TO THE TOP FRAME AND CONFIGURING ITS SCROLLBARS
-        self.output = Canvas(self.top_frame, bg='#ECE8F3', width=560, height=435)
+        self.output = Canvas(
+            self.top_frame,
+            bg='#ECE8F3',
+            highlightthickness=0,
+            borderwidth=0
+        )
         self.output.configure(yscrollcommand=self.scrolly.set, xscrollcommand=self.scrollx.set)
-        self.output.grid(row=0, column=0)
+        self.output.grid(row=0, column=0, sticky='n')
 
         self.scrolly.configure(command=self.output.yview)
         self.scrollx.configure(command=self.output.xview)
@@ -72,13 +85,17 @@ class PDFViewer:
         self.uparrow = self.uparrow_icon.subsample(25)
         self.downarrow = self.downarrow_icon.subsample(25)
 
-        self.upbutton = ttk.Button(self.bottom_frame, image=self.uparrow)
-        self.upbutton.grid(row=0, column=1, padx=(270, 5), pady=8)
+        self.bottom_frame.columnconfigure(0, weight=1)
+        self.bottom_frame.columnconfigure(4, weight=1)
+
+        self.upbutton = ttk.Button(self.bottom_frame, image=self.uparrow, command=self.previous_page)
+        self.upbutton.grid(row=0, column=1, padx=5, pady=8)
+
         self.downbutton = ttk.Button(self.bottom_frame, image=self.downarrow, command=self.next_page)
-        self.downbutton.grid(row=0, column=3, pady=8)
+        self.downbutton.grid(row=0, column=2, pady=8)
 
         self.page_label = ttk.Label(self.bottom_frame, text='page')
-        self.page_label.grid(row=0, column=4, padx=5)
+        self.page_label.grid(row=0, column=3, padx=5)
 
     def prompt_open_file(self) -> None:
         filepath = fd.askopenfilename(
@@ -110,9 +127,18 @@ class PDFViewer:
     def display_page(self) -> None:
         if self.numPages is not None and 0 <= self.current_page < self.numPages:
             self.img_file = self.miner.get_page(self.current_page)
+            self.output.delete('all')
+
+            pdf_width = self.img_file.width()
+            pdf_height = self.img_file.height()
+            
+            self.output.config(width=pdf_width, height=pdf_height)
+
             self.output.create_image(0, 0, anchor='nw', image=self.img_file)
+
             self.stringified_current_page = self.current_page + 1
             self.page_label['text'] = str(self.stringified_current_page) + 'of' + str(self.numPages)
+
             region = self.output.bbox(ALL)
             self.output.configure(scrollregion=region)
 
