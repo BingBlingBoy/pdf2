@@ -19,19 +19,19 @@ class PDFMiner:
         num_pages = self.pdf.page_count
         return metadata, num_pages
 
-    def get_page(self, page_num) -> PhotoImage:
+    def get_page(self, page_num: int, target_width) -> PhotoImage:
         page = self.pdf.load_page(page_num)
 
-        if self.zoom:
-            # Creates a Matrix where the zoom factor is self.zoom
-            mat = fitz.Matrix(self.zoom, self.zoom)
-            pix = page.get_pixmap(matrix=mat)
-        else:
-            pix = page.get_pixmap()
+        zoom_ratio = 1.0
 
-        # Variable that holds a transparent image
+        if target_width:
+            zoom_ratio = target_width / page.rect.width
+
+        mat = fitz.Matrix(zoom_ratio, zoom_ratio)
+        pix = page.get_pixmap(matrix=mat)
         px1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
         img_data = px1.tobytes("ppm")
+
         return PhotoImage(data=img_data)
 
     def get_text(self, page_num):
