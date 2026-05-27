@@ -13,7 +13,7 @@ class PDFViewer:
         self.fileisopen = None
         self.author = None
         self.name = None
-        self.current_page = 0 
+        self.current_page = 0
         self.numPages = None
 
         # MAIN WINDOW
@@ -28,6 +28,9 @@ class PDFViewer:
 
         self.uparrow_icon = PhotoImage(file='./assets/up-arrow.png').subsample(25)
         self.downarrow_icon = PhotoImage(file='./assets/down-arrow.png').subsample(25)
+        self.zoom_in_icon = PhotoImage(file='./assets/plus.png').subsample(27)
+        self.zoom_out_icon = PhotoImage(file='./assets/minus.png').subsample(25)
+        self.zoom_ratio = 1
 
         self._init_menu()
         self._init_layout()
@@ -47,8 +50,17 @@ class PDFViewer:
         self.menu_frame.pack_propagate(False)
         self.menu_frame.pack(side="top", fill="x")
 
+        self.left_group = Frame(self.menu_frame)
+        self.left_group.pack(side="left", fill="y")
+
+        self.right_group = Frame(self.menu_frame)
+        self.right_group.pack(side="right", fill="y")
+
+        self.center_group = Frame(self.menu_frame)
+        self.center_group.pack(side="left", expand=True, fill="y")
+
         self.file_menu_btn = Menubutton(
-            self.menu_frame,
+            self.left_group,
             text="File",
             relief="flat",
             font=menu_font,
@@ -62,7 +74,7 @@ class PDFViewer:
         self.file_menu.add_command(label="Exit", command=self.master.destroy)
 
         self.btn_up = Button(
-            self.menu_frame,
+            self.left_group,
             # text="Up",
             image=self.uparrow_icon,
             compound="left",
@@ -75,7 +87,7 @@ class PDFViewer:
         self.btn_up.pack(side="left", padx=5)
 
         self.btn_down = Button(
-            self.menu_frame,
+            self.left_group,
             # text="Down",
             image=self.downarrow_icon,
             compound="left",
@@ -85,20 +97,43 @@ class PDFViewer:
             # activebackground="#cce8ff",
             borderwidth=0
         )
-        self.btn_down.pack(side="left", padx=5)
+        self.btn_down.pack(side='left', padx=5)
 
         self.curr_page_num = Label(
-            self.menu_frame,
+            self.left_group,
             font=menu_font,
             bg='#FFFFFF',
             width=5,
             anchor='e',
             padx=5
         )
-        self.curr_page_num.pack(side="left", padx=5)
+        self.curr_page_num.pack(side='left', padx=5)
 
-        self.total_page_num = Label(self.menu_frame, font=menu_font)
-        self.total_page_num.pack(side="left", padx=5)
+        self.total_page_num = Label(self.left_group, font=menu_font)
+        self.total_page_num.pack(side='left', padx=5)
+
+        self.zoom_in_btn = Button(
+            self.center_group,
+            image=self.zoom_in_icon,
+            compound='left',
+            relief='flat',
+            borderwidth=0,
+            command=lambda: self.zoom_page(self.zoom_ratio + 0.1)
+        )
+        self.zoom_in_btn.pack(side='left', padx=5)
+
+        self.zoom_separator = ttk.Separator(self.center_group, orient='vertical')
+        self.zoom_separator.pack(side='left', fill='y', padx=5)
+
+        self.zoom_out_btn = Button(
+            self.center_group,
+            image=self.zoom_out_icon,
+            compound='left',
+            relief='flat',
+            borderwidth=0,
+            command=lambda: self.zoom_page(self.zoom_ratio - 0.1)
+        )
+        self.zoom_out_btn.pack(side='left', padx=5)
 
     def _init_layout(self) -> None:
         # TOP AND BOTTOM FRAMES
@@ -178,7 +213,30 @@ class PDFViewer:
             if target_width <= 1:
                 target_width = self.master.winfo_width()
 
-            self.img_file = self.miner.get_page(self.current_page, target_width=target_width)
+            self.img_file, self.zoom_ratio = self.miner.get_page(self.current_page, target_width=target_width)
+            self.output.delete('all')
+
+            self.output.config(width=self.img_file.width(), height=self.img_file.height())
+            self.output.create_image(0, 0, anchor='nw', image=self.img_file)
+
+            self.stringified_current_page = self.current_page + 1
+            self.curr_page_num['text'] = f"{self.stringified_current_page}"
+            self.total_page_num['text'] = f"of {self.numPages}"
+
+            region = self.output.bbox(ALL)
+            self.output.configure(scrollregion=region)
+
+    def zoom_page(self, zoom_ratio: float):
+        if self.numPages is not None and 0 <= self.current_page < self.numPages:
+            self.zoom_ratio = round(zoom_ratio, 1)
+            print(f"zoom ratio: {zoom_ratio}")
+
+            if self.zoom_ratio < 0.1:
+                self.zoom_ratio = 0.1
+
+            self.master.update_idletasks()
+
+            self.img_file = self.miner.zoom_page(self.current_page, zoom_ratio)
             self.output.delete('all')
 
             self.output.config(width=self.img_file.width(), height=self.img_file.height())
