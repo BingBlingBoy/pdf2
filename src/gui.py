@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from src.miner import PDFMiner
 
-CANVAS_WIDTH = 1000
+CANVAS_WIDTH = 1100
 
 class PDFViewer:
     def __init__(self, master, initial_file=None) -> None:
@@ -99,15 +99,28 @@ class PDFViewer:
         # ADDING THE CANVAS TO THE TOP FRAME
         self.output = Canvas(
             self.top_frame,
+            width=CANVAS_WIDTH,
             bg='#ECE8F3',
             highlightthickness=0,
             borderwidth=0
         )
         self.output.configure(yscrollcommand=self.scrolly.set, xscrollcommand=self.scrollx.set)
-        self.output.grid(row=0, column=0, sticky='nsew')
+        self.output.grid(row=0, column=0, sticky='ns')
 
         self.scrolly.configure(command=self.output.yview)
         self.scrollx.configure(command=self.output.xview)
+
+        self.output.bind('<Enter>', self._bound_to_mousewheel)
+        self.output.bind('<Leave>', self._unbound_to_mousewheel)
+
+    def _bound_to_mousewheel(self, event):
+        self.output.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbound_to_mousewheel(self, event):
+        self.output.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event):
+        self.output.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def _init_control(self) -> None:
         # ADDING UP, DOWN BUTTONS AND THE LABEL TO THE BOTTOM FRAME

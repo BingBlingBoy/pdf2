@@ -30,6 +30,7 @@ def main():
     # print(args.extract)
 
     root = Tk()
+    root.attributes('-zoomed', True)
     app = PDFViewer(root)
     root.mainloop()
 
