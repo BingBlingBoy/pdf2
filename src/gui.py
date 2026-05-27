@@ -1,6 +1,7 @@
 from tkinter import *
 import os
 from tkinter import ttk
+from tkinter import font
 from tkinter import filedialog as fd
 from src.miner import PDFMiner
 
@@ -36,21 +37,25 @@ class PDFViewer:
             self.load_pdf(initial_file)
 
     def _init_menu(self) -> None:
+        menu_font = font.Font(family="Arial", size=14)
         self.menu_frame = Frame(
             self.master,
+            height=40,
             relief="raised",
             borderwidth=1
         )
+        self.menu_frame.pack_propagate(False)
         self.menu_frame.pack(side="top", fill="x")
 
         self.file_menu_btn = Menubutton(
             self.menu_frame,
             text="File",
-            relief="flat"
+            relief="flat",
+            font=menu_font,
         )
-        self.file_menu_btn.pack(side="left", padx=5)
+        self.file_menu_btn.pack(side="left", padx=(0, 80))
 
-        self.file_menu = Menu(self.file_menu_btn, tearoff=0)
+        self.file_menu = Menu(self.file_menu_btn, tearoff=0, font=menu_font)
         self.file_menu_btn.config(menu=self.file_menu)
         self.file_menu.add_command(label="Open File", command=self.prompt_open_file)
         self.file_menu.add_separator()
@@ -81,6 +86,19 @@ class PDFViewer:
             borderwidth=0
         )
         self.btn_down.pack(side="left", padx=5)
+
+        self.curr_page_num = Label(
+            self.menu_frame,
+            font=menu_font,
+            bg='#FFFFFF',
+            width=5,
+            anchor='e',
+            padx=5
+        )
+        self.curr_page_num.pack(side="left", padx=5)
+
+        self.total_page_num = Label(self.menu_frame, font=menu_font)
+        self.total_page_num.pack(side="left", padx=5)
 
     def _init_layout(self) -> None:
         # TOP AND BOTTOM FRAMES
@@ -125,8 +143,6 @@ class PDFViewer:
     def _init_control(self) -> None:
         # ADDING UP, DOWN BUTTONS AND THE LABEL TO THE BOTTOM FRAME
         self.scrollx.configure(command=self.output.xview)
-        # self.page_label = ttk.Label(self.bottom_frame, text='page')
-        # self.page_label.grid(row=0, column=3, padx=5)
 
     def prompt_open_file(self) -> None:
         filepath = fd.askopenfilename(
@@ -169,7 +185,8 @@ class PDFViewer:
             self.output.create_image(0, 0, anchor='nw', image=self.img_file)
 
             self.stringified_current_page = self.current_page + 1
-            # self.page_label['text'] = str(self.stringified_current_page) + 'of' + str(self.numPages)
+            self.curr_page_num['text'] = f"{self.stringified_current_page}"
+            self.total_page_num['text'] = f"of {self.numPages}"
 
             region = self.output.bbox(ALL)
             self.output.configure(scrollregion=region)
