@@ -118,7 +118,7 @@ class PDFViewer:
             compound='left',
             relief='flat',
             borderwidth=0,
-            command=lambda: self.zoom_page(self.zoom_ratio + 0.1)
+            command=lambda: self.display_page(self.zoom_ratio + 0.1)
         )
         self.zoom_in_btn.pack(side='left', padx=5)
 
@@ -131,7 +131,7 @@ class PDFViewer:
             compound='left',
             relief='flat',
             borderwidth=0,
-            command=lambda: self.zoom_page(self.zoom_ratio - 0.1)
+            command=lambda: self.display_page(self.zoom_ratio - 0.1)
         )
         self.zoom_out_btn.pack(side='left', padx=5)
 
@@ -205,38 +205,33 @@ class PDFViewer:
             self.master.title(f"PDF Viewer - {self.name}")
             self.display_page()
 
-    def display_page(self) -> None:
+    def display_page(self, zoom_ratio: float | None = None) -> None:
         if self.numPages is not None and 0 <= self.current_page < self.numPages:
             self.master.update_idletasks()
 
-            target_width = self.output.winfo_width()
-            if target_width <= 1:
-                target_width = self.master.winfo_width()
-
-            self.img_file, self.zoom_ratio = self.miner.get_page(self.current_page, target_width=target_width)
-            self.output.delete('all')
-
-            self.output.config(width=self.img_file.width(), height=self.img_file.height())
-            self.output.create_image(0, 0, anchor='nw', image=self.img_file)
-
-            self.stringified_current_page = self.current_page + 1
-            self.curr_page_num['text'] = f"{self.stringified_current_page}"
-            self.total_page_num['text'] = f"of {self.numPages}"
-
-            region = self.output.bbox(ALL)
-            self.output.configure(scrollregion=region)
-
-    def zoom_page(self, zoom_ratio: float):
-        if self.numPages is not None and 0 <= self.current_page < self.numPages:
-            self.zoom_ratio = round(zoom_ratio, 1)
+            self.zoom_ratio = round(zoom_ratio, 1) if zoom_ratio else self.zoom_ratio
             print(f"zoom ratio: {zoom_ratio}")
 
             if self.zoom_ratio < 0.1:
                 self.zoom_ratio = 0.1
 
-            self.master.update_idletasks()
+            target_width = self.output.winfo_width()
+            print(f"Target width: {target_width}")
 
-            self.img_file = self.miner.zoom_page(self.current_page, zoom_ratio)
+            if target_width <= 1:
+                target_width = self.master.winfo_width()
+
+            if not zoom_ratio:
+                self.img_file, self.zoom_ratio = self.miner.get_page(
+                    self.current_page,
+                    target_width=target_width
+                )
+            else:
+                self.img_file, self.zoom_ratio = self.miner.get_page(
+                    self.current_page,
+                    zoom_ratio=self.zoom_ratio
+                )
+
             self.output.delete('all')
 
             self.output.config(width=self.img_file.width(), height=self.img_file.height())

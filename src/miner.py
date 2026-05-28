@@ -19,10 +19,8 @@ class PDFMiner:
         num_pages = self.pdf.page_count
         return metadata, num_pages
 
-    def get_page(self, page_num: int, target_width):
+    def get_page(self, page_num: int, target_width: int | None = None, zoom_ratio: float | None = None):
         page = self.pdf.load_page(page_num)
-
-        zoom_ratio = 1.0
 
         if target_width:
             zoom_ratio = target_width / page.rect.width
@@ -33,16 +31,6 @@ class PDFMiner:
         img_data = px1.tobytes("ppm")
 
         return [PhotoImage(data=img_data), zoom_ratio]
-
-    def zoom_page(self, page_num: int, zoom_ratio: float) -> PhotoImage:
-        page = self.pdf.load_page(page_num)
-
-        mat = fitz.Matrix(zoom_ratio, zoom_ratio)
-        pix = page.get_pixmap(matrix=mat)
-        px1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
-        img_data = px1.tobytes("ppm")
-
-        return PhotoImage(data=img_data)
 
     def get_text(self, page_num):
         page = self.pdf.load_page(page_num)
