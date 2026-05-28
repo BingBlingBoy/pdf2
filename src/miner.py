@@ -29,6 +29,7 @@ class PDFMiner:
         pix = page.get_pixmap(matrix=mat)
         px1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
         img_data = px1.tobytes("ppm")
+        print(f"Miner page zoom: {zoom_ratio}")
 
         return [PhotoImage(data=img_data), zoom_ratio]
 

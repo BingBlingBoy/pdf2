@@ -30,8 +30,9 @@ def main():
     # print(args.extract)
 
     root = Tk()
+    root.option_add('*TCombobox*Listbox.font', ('Arial', 14))
     root.attributes('-zoomed', True)
-    app = PDFViewer(root)
+    app = PDFViewer(root, args.file)
     root.mainloop()
 
 if __name__ == '__main__':

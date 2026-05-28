@@ -31,6 +31,18 @@ class PDFViewer:
         self.zoom_in_icon = PhotoImage(file='./assets/plus.png').subsample(27)
         self.zoom_out_icon = PhotoImage(file='./assets/minus.png').subsample(25)
         self.zoom_ratio = 1
+        self.zoom_dict = {
+            'Automatic Zoom': None,
+            '50%': 0.5,
+            '75%': 0.75,
+            '100%': 1.0,
+            '125%': 1.25,
+            '150%': 1.5,
+            '200%': 2,
+            '300%': 3,
+            '400%': 4,
+        }
+        self.default_page_zoom = None
 
         self._init_menu()
         self._init_layout()
@@ -118,7 +130,7 @@ class PDFViewer:
             compound='left',
             relief='flat',
             borderwidth=0,
-            command=lambda: self.display_page(self.zoom_ratio + 0.1)
+            command=lambda: self.display_page(self.zoom_ratio + 0.2)
         )
         self.zoom_in_btn.pack(side='left', padx=5)
 
@@ -131,9 +143,24 @@ class PDFViewer:
             compound='left',
             relief='flat',
             borderwidth=0,
-            command=lambda: self.display_page(self.zoom_ratio - 0.1)
+            command=lambda: self.display_page(self.zoom_ratio - 0.2)
         )
         self.zoom_out_btn.pack(side='left', padx=5)
+
+        self.zoom_dropdown = ttk.Combobox(
+            self.center_group,
+            values=list(self.zoom_dict.keys()),
+            state='readonly',
+            font=("Arial", 14)
+        )
+        self.zoom_dropdown.pack(side='left', padx=5)
+        self.zoom_dropdown.set('Automatic Zoom')
+        self.zoom_dropdown.bind("<<ComboboxSelected>>", self.on_zoom_select)
+
+    def on_zoom_select(self, ev):
+        selected_value = ev.widget.get()
+        print(f"The user selected: {selected_value}")
+        self.display_page(zoom_ratio=self.zoom_dict[selected_value])
 
     def _init_layout(self) -> None:
         # TOP AND BOTTOM FRAMES
@@ -205,28 +232,38 @@ class PDFViewer:
             self.master.title(f"PDF Viewer - {self.name}")
             self.display_page()
 
+    def decimal_to_percentage(self, zoom_ratio: float):
+        percentage = int(zoom_ratio * 100)
+        percentage_str = f"{percentage} %"
+
+        return percentage_str
+
     def display_page(self, zoom_ratio: float | None = None) -> None:
         if self.numPages is not None and 0 <= self.current_page < self.numPages:
+            if zoom_ratio:
+                self.zoom_ratio = round(zoom_ratio, 1)
+                if self.zoom_ratio < 0.1:
+                    self.zoom_ratio = 0.1
+                print(f"zoom ratio: {self.zoom_ratio}")
+
             self.master.update_idletasks()
+            target_width = self.master.winfo_width() - self.scrolly.winfo_width() - CANVAS_WIDTH
 
-            self.zoom_ratio = round(zoom_ratio, 1) if zoom_ratio else self.zoom_ratio
-            print(f"zoom ratio: {zoom_ratio}")
+            if target_width <= 50:
+                target_width = CANVAS_WIDTH
 
-            if self.zoom_ratio < 0.1:
-                self.zoom_ratio = 0.1
-
-            target_width = self.output.winfo_width()
-            print(f"Target width: {target_width}")
-
-            if target_width <= 1:
-                target_width = self.master.winfo_width()
-
+            print(f"Stable Target width: {target_width}")
             if not zoom_ratio:
+                self.zoom_dropdown.set("Automatic Zoom")
                 self.img_file, self.zoom_ratio = self.miner.get_page(
                     self.current_page,
-                    target_width=target_width
+                    target_width=target_width,
                 )
+                print(self.zoom_ratio)
+                self.default_page_zoom = self.zoom_ratio
+                print(f"Default Page Zoom: {self.default_page_zoom}")
             else:
+                self.zoom_dropdown.set(self.decimal_to_percentage(zoom_ratio))
                 self.img_file, self.zoom_ratio = self.miner.get_page(
                     self.current_page,
                     zoom_ratio=self.zoom_ratio
