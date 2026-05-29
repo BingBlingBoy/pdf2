@@ -10,9 +10,7 @@ class PDFMiner:
         self.width, self.height = self.first_page.rect.width, self.first_page.rect.height
 
         # Zoom values depneding on the pdf width
-        zoom_dict = {800:0.8, 700:0.6, 600:1.0, 500:1.0}
         width = int(math.floor(self.width / 100.0) * 100)
-        self.zoom = zoom_dict[width]
 
     def get_metadata(self):
         metadata = self.pdf.metadata

@@ -1,6 +1,7 @@
 import argparse
-from tkinter import *
-from src.gui import PDFViewer
+from tkinter import Tk
+# from src.gui import PDFViewer
+from src.controller import AppController
 
 
 def parse_arguments(args=None) -> argparse.Namespace:
@@ -32,7 +33,7 @@ def main():
     root = Tk()
     root.option_add('*TCombobox*Listbox.font', ('Arial', 14))
     root.attributes('-zoomed', True)
-    app = PDFViewer(root, args.file)
+    app = AppController(root, args.file)
     root.mainloop()
 
 if __name__ == '__main__':
