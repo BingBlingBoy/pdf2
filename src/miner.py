@@ -27,7 +27,6 @@ class PDFMiner:
         pix = page.get_pixmap(matrix=mat)
         px1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
         img_data = px1.tobytes("ppm")
-        print(f"Miner page zoom: {zoom_ratio}")
 
         return [PhotoImage(data=img_data), zoom_ratio]
 
@@ -35,3 +34,18 @@ class PDFMiner:
         page = self.pdf.load_page(page_num)
         text = page.get_text('text')
         return text
+
+    def get_highlighted_text(self, page_num, zoom_ratio, start_x, start_y, end_x, end_y):
+        page = self.pdf.load_page(page_num)
+
+        x0, y0 = min(start_x, end_x), min(start_y, end_y)
+        x1, y1 = max(start_x, end_x), max(start_y, end_y)
+
+        pdf_x0 = x0 / zoom_ratio
+        pdf_y0 = y0 / zoom_ratio
+        pdf_x1 = x1 / zoom_ratio
+        pdf_y1 = y1 / zoom_ratio
+
+        rect = fitz.Rect(pdf_x0, pdf_y0, pdf_x1, pdf_y1)
+        selected_text = page.get_text("text", clip=rect).strip()
+        print(f"Extracted: {selected_text}")

@@ -55,6 +55,7 @@ class AppController:
         return f"{int(zoom_ratio * 100)} %"
 
     def display_page(self, zoom_ratio: float | None = None) -> None:
+        print(f"Current zoom_ratio: {self.zoom_ratio}")
         if self.miner is None:
             return
 
@@ -86,17 +87,32 @@ class AppController:
             self.view.update_canvas(img_file)
             self.view.update_page_labels(self.current_page + 1, self.numPages)
 
+    def extract_highlighted_text(self, start_x, start_y, end_x, end_y) -> None:
+        if self.miner is None:
+            return
+
+        if self.numPages is not None and 0 <= self.current_page < self.numPages:
+            self.root.update_idletasks()
+
+            target_width = (self.root.winfo_width() - self.view.get_scrollbar_width()) / 2
+            if target_width <= 50:
+                target_width = config.CANVAS_WIDTH
+
+            self.miner.get_highlighted_text(
+                self.current_page, self.zoom_ratio, start_x, start_y, end_x, end_y
+            )
+
     def next_page(self) -> None:
         if self.fileisopen:
             if self.numPages is not None and self.current_page < self.numPages - 1:
                 self.current_page += 1
-                self.display_page()
+                self.display_page(zoom_ratio=self.zoom_ratio)
 
     def previous_page(self) -> None:
         if self.fileisopen:
             if self.current_page > 0:
                 self.current_page -= 1
-                self.display_page()
+                self.display_page(zoom_ratio=self.zoom_ratio)
 
     def on_zoom_select(self, ev):
         selected_value = ev.widget.get()
