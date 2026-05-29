@@ -1,6 +1,7 @@
 import math
 import fitz
 from tkinter import PhotoImage
+from PIL import Image
 
 class PDFMiner:
     def __init__(self, filepath) -> None:
@@ -8,9 +9,6 @@ class PDFMiner:
         self.pdf = fitz.open(self.filepath)
         self.first_page = self.pdf.load_page(0)
         self.width, self.height = self.first_page.rect.width, self.first_page.rect.height
-
-        # Zoom values depneding on the pdf width
-        width = int(math.floor(self.width / 100.0) * 100)
 
     def get_metadata(self):
         metadata = self.pdf.metadata
@@ -25,10 +23,20 @@ class PDFMiner:
 
         mat = fitz.Matrix(zoom_ratio, zoom_ratio)
         pix = page.get_pixmap(matrix=mat)
-        px1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
-        img_data = px1.tobytes("ppm")
 
-        return [PhotoImage(data=img_data), zoom_ratio]
+        mode = "RGBA" if pix.alpha else "RGB"
+        img = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+        if mode == "RGB":
+            img = img.convert("RGBA")
+
+        words = []
+        for w in page.get_text("words"):
+            words.append({
+                "coords": (w[0] * zoom_ratio, w[1] * zoom_ratio, w[2] * zoom_ratio, w[3] * zoom_ratio),
+                "text": w[4]
+            })
+
+        return img, zoom_ratio, words
 
     def get_text(self, page_num):
         page = self.pdf.load_page(page_num)

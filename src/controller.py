@@ -27,8 +27,8 @@ class AppController:
 
     def prompt_open_file(self) -> None:
         filepath = fd.askopenfilename(
-            title='Select a PDF file', 
-            initialdir=os.getcwd(), 
+            title='Select a PDF file',
+            initialdir=os.getcwd(),
             filetypes=(('PDF', '*.pdf'), )
         )
         if filepath:
@@ -55,7 +55,6 @@ class AppController:
         return f"{int(zoom_ratio * 100)} %"
 
     def display_page(self, zoom_ratio: float | None = None) -> None:
-        print(f"Current zoom_ratio: {self.zoom_ratio}")
         if self.miner is None:
             return
 
@@ -73,34 +72,24 @@ class AppController:
 
             if not zoom_ratio:
                 self.view.set_zoom_dropdown_text("Automatic Zoom")
-                img_file, self.zoom_ratio = self.miner.get_page(
+                img_file, self.zoom_ratio, words = self.miner.get_page(
                     self.current_page, target_width=target_width
                 )
                 self.default_page_zoom = self.zoom_ratio
             else:
                 self.view.set_zoom_dropdown_text(self.decimal_to_percentage(self.zoom_ratio))
-                img_file, self.zoom_ratio = self.miner.get_page(
+                img_file, self.zoom_ratio, words = self.miner.get_page(
                     self.current_page, zoom_ratio=self.zoom_ratio
                 )
 
             # Update the View
-            self.view.update_canvas(img_file)
+            self.view.update_canvas(img_file, words)
             self.view.update_page_labels(self.current_page + 1, self.numPages)
 
-    def extract_highlighted_text(self, start_x, start_y, end_x, end_y) -> None:
-        if self.miner is None:
+    def extract_highlighted_text(self, text: str) -> None:
+        if not text:
             return
-
-        if self.numPages is not None and 0 <= self.current_page < self.numPages:
-            self.root.update_idletasks()
-
-            target_width = (self.root.winfo_width() - self.view.get_scrollbar_width()) / 2
-            if target_width <= 50:
-                target_width = config.CANVAS_WIDTH
-
-            self.miner.get_highlighted_text(
-                self.current_page, self.zoom_ratio, start_x, start_y, end_x, end_y
-            )
+        print(f"Extracted: {text}")
 
     def next_page(self) -> None:
         if self.fileisopen:

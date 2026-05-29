@@ -19,8 +19,8 @@ class PDFViewerUI:
         self.doc_view = DocumentView(self.master, self.controller)
         self.doc_view.pack(side="top", fill="both", expand=True)
 
-    def update_canvas(self, img_file) -> None:
-        self.doc_view.update_canvas(img_file)
+    def update_canvas(self, img_file, words) -> None:
+        self.doc_view.update_canvas(img_file, words)
 
     def update_page_labels(self, current, total) -> None:
         self.top_bar.update_page_labels(current, total)
