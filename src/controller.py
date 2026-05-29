@@ -1,8 +1,8 @@
 import os
 from tkinter import filedialog as fd
 import src.config as config 
-from src.UI import PDFViewerUI
 from src.miner import PDFMiner
+from src.gui.main_window import PDFViewerUI
 
 class AppController:
     def __init__(self, root, initial_file=None):
@@ -66,18 +66,18 @@ class AppController:
 
             self.root.update_idletasks()
 
-            target_width = (self.root.winfo_width() - self.view.scrolly.winfo_width()) / 2
+            target_width = (self.root.winfo_width() - self.view.get_scrollbar_width()) / 2
             if target_width <= 50:
                 target_width = config.CANVAS_WIDTH
 
             if not zoom_ratio:
-                self.view.zoom_dropdown.set("Automatic Zoom")
+                self.view.set_zoom_dropdown_text("Automatic Zoom")
                 img_file, self.zoom_ratio = self.miner.get_page(
                     self.current_page, target_width=target_width
                 )
                 self.default_page_zoom = self.zoom_ratio
             else:
-                self.view.zoom_dropdown.set(self.decimal_to_percentage(self.zoom_ratio))
+                self.view.set_zoom_dropdown_text(self.decimal_to_percentage(self.zoom_ratio))
                 img_file, self.zoom_ratio = self.miner.get_page(
                     self.current_page, zoom_ratio=self.zoom_ratio
                 )

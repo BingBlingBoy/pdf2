@@ -3,48 +3,28 @@ from tkinter import ttk
 from tkinter import font
 import src.config as config
 
-class PDFViewerUI:
-    def __init__(self, master, controller) -> None:
-
-        # MAIN WINDOW
-        self.master = master
-        self.master.title('PDF Viewer')
-        self.master.geometry('580x520+440+180')
-        self.master.resizable(width=True, height=True)
-        self.master.columnconfigure(0, weight=1)
-        self.master.rowconfigure(0, weight=1)
-        # self.master.iconbitmap(self.master, 'pdf_file_icon.ico')
-
-        # CONTROLLER
+class TopBar(Frame):
+    def __init__(self, parent, controller, **kwargs):
+        super().__init__(parent, height=40, relief='raised', borderwidth=1, **kwargs)
         self.controller = controller
+        self.pack_propagate(False)
 
         self.uparrow_icon = PhotoImage(file='./assets/up-arrow.png').subsample(25)
         self.downarrow_icon = PhotoImage(file='./assets/down-arrow.png').subsample(25)
         self.zoom_in_icon = PhotoImage(file='./assets/plus.png').subsample(27)
         self.zoom_out_icon = PhotoImage(file='./assets/minus.png').subsample(25)
 
-        self._init_menu()
-        self._init_layout()
+        self._build_widgets()
 
-    def _init_menu(self) -> None:
+    def _build_widgets(self) -> None:
         menu_font = font.Font(family="Arial", size=14)
 
-        # MENU FRAME
-        self.menu_frame = Frame(
-            self.master,
-            height=40,
-            relief="raised",
-            borderwidth=1
-        )
-        self.menu_frame.pack_propagate(False)
-        self.menu_frame.pack(side="top", fill="x")
-
         # GROUPS
-        self.left_group = Frame(self.menu_frame)
+        self.left_group = Frame(self)
         self.left_group.pack(side="left", fill="y")
-        self.right_group = Frame(self.menu_frame)
+        self.right_group = Frame(self)
         self.right_group.pack(side="right", fill="y")
-        self.center_group = Frame(self.menu_frame)
+        self.center_group = Frame(self)
         self.center_group.pack(side="left", expand=True, fill="y")
 
         # FILE MENU
@@ -134,55 +114,9 @@ class PDFViewerUI:
         self.zoom_dropdown.set('Automatic Zoom')
         self.zoom_dropdown.bind("<<ComboboxSelected>>", self.controller.on_zoom_select)
 
+    def set_zoom_text(self, text):
+        self.zoom_dropdown.set(text)
 
-    def _init_layout(self) -> None:
-        # TOP FRAMES
-        self.top_frame = ttk.Frame(self.master)
-        self.top_frame.pack(side="top", fill="both", expand=True)
-        self.top_frame.columnconfigure(0, weight=1)
-        self.top_frame.rowconfigure(0, weight=1)
-
-        self.scrolly = Scrollbar(self.top_frame, orient=VERTICAL)
-        self.scrolly.grid(row=0, column=1, sticky="ns")
-        self.scrollx = Scrollbar(self.top_frame, orient=HORIZONTAL)
-        self.scrollx.grid(row=1, column=0, sticky="we")
-
-        # ADDING THE CANVAS TO THE TOP FRAME
-        self.output = Canvas(
-            self.top_frame,
-            width=config.CANVAS_WIDTH,
-            bg='#ECE8F3',
-            highlightthickness=0,
-            borderwidth=0
-        )
-        self.output.configure(yscrollcommand=self.scrolly.set, xscrollcommand=self.scrollx.set)
-        self.output.grid(row=0, column=0, sticky='ns')
-
-        self.scrolly.configure(command=self.output.yview)
-        self.scrollx.configure(command=self.output.xview)
-
-        self.output.bind('<Enter>', self._bound_to_mousewheel)
-        self.output.bind('<Leave>', self._unbound_to_mousewheel)
-
-    def _bound_to_mousewheel(self, event) -> None:
-        self.output.bind_all("<MouseWheel>", self._on_mousewheel)
-
-    def _unbound_to_mousewheel(self, event) -> None:
-        self.output.unbind_all("<MouseWheel>")
-
-    def _on_mousewheel(self, event) -> None:
-        self.output.yview_scroll(int(-1*(event.delta/120)), "units")
-
-    def update_canvas(self, img_file) -> None:
-        self.output.delete('all')
-        self.output.config(width=img_file.width(), height=img_file.height())
-        self.output.create_image(0, 0, anchor='nw', image=img_file)
-
-        self.curr_image = img_file
-
-        region = self.output.bbox("all")
-        self.output.configure(scrollregion=region)
-
-    def update_page_labels(self, current, total) -> None:
+    def update_page_labels(self, current, total):
         self.curr_page_num['text'] = f"{current}"
         self.total_page_num['text'] = f"of {total}"
